@@ -35,6 +35,13 @@ def genChord(chordNum):
     for i in range(4):
             lst[chordNum][i] = random.choice(notes_lst)
 
+def sameNote(chordNum):
+    for x in range(4):
+        for y in range(x+1,4):
+            if lst[chordNum][x] == lst[chordNum][y]:
+                return True
+    return False
+
 def genFirstChord(key):
     for i in range(key, 26, 12):
         chordone[0].append(i)
@@ -45,17 +52,12 @@ def genFirstChord(key):
 
     for i in range(3):
         lst[0][i] = random.choice(chordone[i])
-    lst[0][3] = random.choice(chordone[random.choice([0, 1, 2])])
-
+    
+    while True:
+        lst[0][3] = random.choice(chordone[random.choice([0, 1, 2])])
+        if not sameNote(0):
+            break
     lst[0].sort()
-
-
-def sameNote(chordNum):
-    for x in range(4):
-        for y in range(x+1,4):
-            if lst[chordNum][x] == lst[chordNum][y]:
-                return True
-    return False
 
 def unstableInt(chordNum):
     for x in range(4):
@@ -81,7 +83,7 @@ def getProgress():
         for j in range(4):
             progress[i][j] = lst[i+1][j] - lst[i][j]
 
-def getGap(): #병행 1, 5, 8도
+def getGap():
     for a in range(chordn):
         gap[a][0] = lst[a][1] - lst[a][0]
         gap[a][1] = lst[a][2] - lst[a][0]
@@ -89,22 +91,21 @@ def getGap(): #병행 1, 5, 8도
         gap[a][3] = lst[a][2] - lst[a][1]
         gap[a][4] = lst[a][3] - lst[a][1]
         gap[a][5] = lst[a][3] - lst[a][2]
-    for i in range(chordn-1):
-        for j in range(6):
-            if (gap[i][j] in [0, 12, 24, 36] and gap[i+1][j] in [0, 12, 24, 36]) or (gap[i][j] in [7, 19, 31] and gap[i+1][j] in [7, 19, 31]):
-                return True
 
-def eunbok(): #은복 5, 8도
-    for i in range(1, chordn):
-        if (progress[i-1][0] * progress[i-1][3] > 0) or (progress[i-1][0] * progress[i-1][3] == 0 and progress[i-1][0] + progress[i-1][3] == 0):
-            if (gap[i][2] in [12, 24, 36]) or (gap[i][2] in [7, 19, 31]):
-                return True
+def byeong(chordNum): #병행 1, 5, 8도
+    for j in range(6):
+        if (gap[chordNum-1][j] in [0, 12, 24, 36] and gap[chordNum][j] in [0, 12, 24, 36]) or (gap[chordNum-1][j] in [7, 19, 31] and gap[chordNum][j] in [7, 19, 31]):
+            return True
 
-def getMove():
-    for i in range(chordn-1):
-        for j in range(4):
-            if abs(progress[i][j]) > 4:
-                return True
+def eunbok(chordNum): #은복 5, 8도
+    if (progress[chordNum-1][0] * progress[chordNum-1][3] > 0) or (progress[chordNum-1][0] * progress[chordNum-1][3] == 0 and progress[chordNum-1][0] + progress[chordNum-1][3] == 0):
+        if (gap[chordNum][2] in [12, 24, 36]) or (gap[chordNum][2] in [7, 19, 31]):
+            return True
+
+def getMove(chordNum):
+    for j in range(4):
+        if abs(progress[chordNum-1][j]) > 4:
+            return True
 
 def oneMore():
     print()
@@ -126,39 +127,36 @@ def oneMore():
 def main():
 
     genFirstChord(key)
-    
-    isParalle = True
-    isEunbok = True
-    isMove = True
 
-    while isParalle == True or isEunbok == True or isMove == True:
-        
-        isParalle = False
-        isEunbok = False
-        isMove = False
+    for chordnum in range(1, chordn):
 
-        for chordnum in range(1, chordn):
+        isSame = True #4성부에서 같은 음 없음
+        isUnstable = True #감5도, 증4도 음정 배제
+        isGap = False #베이스와 소프라노의 음정 차이는 적어도 단7도
+        isParalle = True
+        isEunbok = True
+        isMove = True
 
-            isSame = True #4성부에서 같은 음 없음
-            isUnstable = True #감5도, 증4도 음정 배제
-            isGap = False #베이스와 소프라노의 음정 차이는 적어도 단7도
-
-            while isSame == True or isUnstable == True or isGap == False:
+        while isSame == True or isUnstable == True or isGap == False or isParalle == True or isEunbok == True or isMove == True:
                     
-                isSame = False
-                isUnstable = False
-                isGap = True
+            isSame = False
+            isUnstable = False
+            isGap = True
+            isParalle = False
+            isEunbok = False
+            isMove = False
                 
-                genChord(chordnum) # Generates a chord
-                lst[chordnum].sort()
-                isSame = sameNote(chordnum) # False = same notes don't exist
-                isUnstable = unstableInt(chordnum) # False = it's unstable
-                isGap = gapNotes(chordnum) # True = gap between the notes is okay
+            genChord(chordnum) # Generates a chord
+            lst[chordnum].sort()
+            isSame = sameNote(chordnum) # False = same notes don't exist
+            isUnstable = unstableInt(chordnum) # False = it's unstable
+            isGap = gapNotes(chordnum) # True = gap between the notes is okay
         
-        getProgress()
-        isParalle = getGap()
-        isEunbok = eunbok()
-        isMove = getMove()
+            getProgress()
+            getGap()
+            isParalle = byeong(chordnum)
+            isEunbok = eunbok(chordnum)
+            isMove = getMove(chordnum)
 
     printChord()
 
