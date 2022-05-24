@@ -1,17 +1,23 @@
 import random
-dic = {-11:"C3",-10:"C#3",-9:"D3",-8:"D#3",
-       -7:"E3",-6:"F3",-5:"F#3",-4:"G3",-3:"G#3",
-       -2:"A3",-1:"A#3",0:"B3",1:"C4",2:"C#4",3:"D4",
-       4:"D#4",5:"E4",6:"F4",7:"F#4",8:"G4",9:"G#4",
-       10:"A4",11:"A#4",12:"B4",13:"C5",14:"C#5",15:"D5",
-       16:"D#5",17:"E5",18:"F5",19:"F#5",20:"G5",21:"G#5",
-       22:"A5",23:"A#5",24:"B5",25:"C6"}
+import musicalbeeps
+
+dic = {-11:"C3",-10:"C3#",-9:"D3",-8:"D3#",
+       -7:"E3",-6:"F3",-5:"F3#",-4:"G3",-3:"G3#",
+       -2:"A3",-1:"A3#",0:"B3",1:"C4",2:"C4#",3:"D4",
+       4:"D4#",5:"E4",6:"F4",7:"F4#",8:"G4",9:"G4#",
+       10:"A4",11:"A4#",12:"B4",13:"C5",14:"C5#",15:"D5",
+       16:"D5#",17:"E5",18:"F5",19:"F5#",20:"G5",21:"G5#",
+       22:"A5",23:"A5#",24:"B5",25:"C6"}
 major = [2,2,1,2,2,2,1]
 dic_keys = list(dic.keys())
 dic_values = list(dic.values())
+
 chordn = int(input("How many chords do you want?: "))
-lst = [[0,0,0,0]]*chordn
-notes_lst = []
+lst = [[0,0,0,0] for count in range(chordn)]
+progress = [[0,0,0,0] for count in range(chordn-1)]
+gap = [[0,0,0,0,0,0] for count in range(chordn)]
+notes_lst = [] #notes from the key go here
+
 
 def key_setting(lst_here):
     key = dic_keys[dic_values.index(input("What key do you want to be in? (type in C3~B3): "))]
@@ -48,9 +54,41 @@ def gapNotes(chordNum):
     else:
         return False
 
-def printChord(chordNum):
-    for i in range(4):
-            print(dic[(lst[chordNum][i])], end=' ')
+def printChord():
+    for j in range(chordn):
+        for i in range(4):
+            print(dic[(lst[j][i])], end=' ')
+        print()
+
+def getProgress():
+    for i in range(chordn-1):
+        for j in range(4):
+            progress[i][j] = lst[i+1][j] - lst[i][j]
+
+def getGap(): #병행 1, 5, 8도
+    for a in range(chordn):
+        gap[a][0] = lst[a][1] - lst[a][0]
+        gap[a][1] = lst[a][2] - lst[a][0]
+        gap[a][2] = lst[a][3] - lst[a][0]
+        gap[a][3] = lst[a][2] - lst[a][1]
+        gap[a][4] = lst[a][3] - lst[a][1]
+        gap[a][5] = lst[a][3] - lst[a][2]
+    for i in range(chordn-1):
+        for j in range(6):
+            if (gap[i][j] in [0, 12, 24, 36] and gap[i+1][j] in [0, 12, 24, 36]) or (gap[i][j] in [7, 19, 31] and gap[i+1][j] in [7, 19, 31]):
+                return True
+
+def eunbok(): #은복 5, 8도
+    for i in range(1, chordn):
+        if (progress[i-1][0] * progress[i-1][3] > 0) or (progress[i-1][0] * progress[i-1][3] == 0 and progress[i-1][0] + progress[i-1][3] == 0):
+            if (gap[i][2] in [12, 24, 36]) or (gap[i][2] in [7, 19, 31]):
+                return True
+
+def getMove():
+    for i in range(chordn-1):
+        for j in range(4):
+            if abs(progress[i][j]) > 4:
+                return True
 
 def oneMore():
     print()
@@ -67,33 +105,61 @@ def oneMore():
         print("Wrong answer...")
         oneMore()
 
+########################
+
 def main():
     
-    for chordnum in range(chordn):
+    isParalle = True
+    isEunbok = True
+    isMove = True
 
-        isSame = True #4성부에서 같은 음 없음
-        isUnstable = True #감5도, 증4도 음정 배제
-        isGap = False #베이스와 소프라노의 음정 차이는 적어도 단7도
+    while isParalle == True or isEunbok == True or isMove == True:
+        
+        isParalle = False
+        isEunbok = False
+        isMove = False
 
-        while isSame == True or isUnstable == True or isGap == False:
-            
-            isSame = False
-            isUnstable = False
-            isGap = True
+        for chordnum in range(chordn):
 
-            genChord(chordnum) #Generates a chord
-            lst[chordnum].sort()
+            isSame = True #4성부에서 같은 음 없음
+            isUnstable = True #감5도, 증4도 음정 배제
+            isGap = False #베이스와 소프라노의 음정 차이는 적어도 단7도
 
-            isSame = sameNote(chordnum) # False = same notes don't exist
-            isUnstable = unstableInt(chordnum) # False = it's unstable
-            isGap = gapNotes(chordnum) # True = gap between the notes is okay
+            while isSame == True or isUnstable == True or isGap == False:
+                    
+                isSame = False
+                isUnstable = False
+                isGap = True
 
-        printChord(chordnum)
+                genChord(chordnum) # Generates a chord
+                lst[chordnum].sort()
+
+                isSame = sameNote(chordnum) # False = same notes don't exist
+                isUnstable = unstableInt(chordnum) # False = it's unstable
+                isGap = gapNotes(chordnum) # True = gap between the notes is okay
+        
+        getProgress()
+        isParalle = getGap()
+        isEunbok = eunbok()
+        isMove = getMove()
+
+    printChord()
+
+    player1 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player2 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player3 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player4 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+
+    for i in range(chordn):
         print()
-    
+        player1.play_note(dic[(lst[i][0])], 1)
+        player2.play_note(dic[(lst[i][1])], 1)
+        player3.play_note(dic[(lst[i][2])], 1)
+        player4.play_note(dic[(lst[i][3])], 1)
+
     oneMore()
 
-######################
+########################
 
 key_setting(notes_lst)
 
