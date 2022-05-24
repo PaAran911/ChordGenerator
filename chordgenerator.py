@@ -17,6 +17,7 @@ lst = [[0,0,0,0] for count in range(chordn)]
 progress = [[0,0,0,0] for count in range(chordn-1)]
 gap = [[0,0,0,0,0,0] for count in range(chordn)]
 notes_lst = [] #notes from the key go here
+chordone = [[] for count in range(3)]
 
 
 def key_setting(lst_here):
@@ -28,11 +29,26 @@ def key_setting(lst_here):
             lst_here.append(notes)
             notes += i
             if notes > max(dic_keys):
-                break
+                return key
 
 def genChord(chordNum):
     for i in range(4):
             lst[chordNum][i] = random.choice(notes_lst)
+
+def genFirstChord(key):
+    for i in range(key, 26, 12):
+        chordone[0].append(i)
+    for i in range(key+4, 26, 12):
+        chordone[1].append(i)
+    for i in range(key+7, 26, 12):
+        chordone[2].append(i)
+
+    for i in range(3):
+        lst[0][i] = random.choice(chordone[i])
+    lst[0][3] = random.choice(chordone[random.choice([0, 1, 2])])
+
+    lst[0].sort()
+
 
 def sameNote(chordNum):
     for x in range(4):
@@ -108,6 +124,8 @@ def oneMore():
 ########################
 
 def main():
+
+    genFirstChord(key)
     
     isParalle = True
     isEunbok = True
@@ -119,7 +137,7 @@ def main():
         isEunbok = False
         isMove = False
 
-        for chordnum in range(chordn):
+        for chordnum in range(1, chordn):
 
             isSame = True #4성부에서 같은 음 없음
             isUnstable = True #감5도, 증4도 음정 배제
@@ -130,10 +148,9 @@ def main():
                 isSame = False
                 isUnstable = False
                 isGap = True
-
+                
                 genChord(chordnum) # Generates a chord
                 lst[chordnum].sort()
-
                 isSame = sameNote(chordnum) # False = same notes don't exist
                 isUnstable = unstableInt(chordnum) # False = it's unstable
                 isGap = gapNotes(chordnum) # True = gap between the notes is okay
@@ -157,10 +174,16 @@ def main():
         player3.play_note(dic[(lst[i][2])], 1)
         player4.play_note(dic[(lst[i][3])], 1)
 
+    print()
+    player1.play_note(dic[(lst[0][0])], 1)
+    player2.play_note(dic[(lst[0][1])], 1)
+    player3.play_note(dic[(lst[0][2])], 1)
+    player4.play_note(dic[(lst[0][3])], 1)    
+
     oneMore()
 
 ########################
 
-key_setting(notes_lst)
+key = key_setting(notes_lst)
 
 main()
