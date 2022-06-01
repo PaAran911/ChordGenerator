@@ -1,8 +1,9 @@
 import random
 import musicalbeeps
 
-dic = {-11:"C3",-10:"C3#",-9:"D3",-8:"D3#",
-       -7:"E3",-6:"F3",-5:"F3#",-4:"G3",-3:"G3#",
+dic = {-15:"G2#",-14:"A2",-13:"A2#",-12:"B2",-11:"C3",
+       -10:"C3#",-9:"D3",-8:"D3#",-7:"E3",
+       -6:"F3",-5:"F3#",-4:"G3",-3:"G3#",
        -2:"A3",-1:"A3#",0:"B3",1:"C4",2:"C4#",3:"D4",
        4:"D4#",5:"E4",6:"F4",7:"F4#",8:"G4",9:"G4#",
        10:"A4",11:"A4#",12:"B4",13:"C5",14:"C5#",15:"D5",
@@ -17,8 +18,8 @@ lst = [[0,0,0,0] for count in range(chordn)]
 progress = [[0,0,0,0] for count in range(chordn-1)]
 gap = [[0,0,0,0,0,0] for count in range(chordn)]
 notes_lst = [] #notes from the key go here
-chordone = [[] for count in range(3)]
-
+chordmaker = [[] for count in range(3)]
+f = open("chords.txt", "a")
 
 def key_setting(lst_here):
     key = dic_keys[dic_values.index(input("What key do you want to be in? (type in C3~B3): "))]
@@ -29,7 +30,16 @@ def key_setting(lst_here):
             lst_here.append(notes)
             notes += i
             if notes > max(dic_keys):
-                return key
+                break
+    notes = key
+    while notes >= min(dic_keys):
+        for i in reversed(major):
+            notes -= i
+            if notes < min(dic_keys):
+                break
+            lst_here.append(notes)
+    notes_lst.sort()
+    return key
 
 def genChord(chordNum):
     for i in range(4):
@@ -42,22 +52,30 @@ def sameNote(chordNum):
                 return True
     return False
 
-def genFirstChord(key):
-    for i in range(key, 26, 12):
-        chordone[0].append(i)
-    for i in range(key+4, 26, 12):
-        chordone[1].append(i)
-    for i in range(key+7, 26, 12):
-        chordone[2].append(i)
+def gapNotes(chordNum):
+    if  24 >= lst[chordNum][3]-lst[chordNum][0] >= 10:
+        return True
+    else:
+        return False
 
-    for i in range(3):
-        lst[0][i] = random.choice(chordone[i])
-    
+def genFirstChord():
+    for i in notes_lst:
+        if i % 12 == key % 12:
+            chordmaker[0].append(i)
+        elif i % 12 == (key+4) % 12:
+            chordmaker[1].append(i)
+        elif i % 12 == (key+7) % 12:
+            chordmaker[2].append(i)
     while True:
-        lst[0][3] = random.choice(chordone[random.choice([0, 1, 2])])
-        if not sameNote(0):
+        for i in range(3):
+            lst[0][i] = random.choice(chordmaker[i])
+        lst[0][3] = random.choice(chordmaker[random.choice([0, 1, 2])])
+        if (not sameNote(0)) and (gapNotes(0)):
             break
     lst[0].sort()
+    
+    #for i in range(3):
+        #chordmaker[i].clear()
 
 def unstableInt(chordNum):
     for x in range(4):
@@ -65,12 +83,6 @@ def unstableInt(chordNum):
             if lst[chordNum][x]-lst[chordNum][y] == 6 or lst[chordNum][x]-lst[chordNum][y] == 18 or lst[chordNum][x]-lst[chordNum][y] == 30:
                 return True
     return False
-
-def gapNotes(chordNum):
-    if  24 >= lst[chordNum][3]-lst[chordNum][0] >= 10:
-        return True
-    else:
-        return False
 
 def printChord():
     for j in range(chordn):
@@ -107,9 +119,57 @@ def getMove(chordNum):
         if abs(progress[chordNum-1][j]) > 4:
             return True
 
+def ppChords():
+    player1 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player2 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player3 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    player4 = musicalbeeps.Player(volume = 0.05, mute_output = False)
+    for i in range(chordn):
+        player1.play_note(dic[(lst[i][0])], 1)
+        player2.play_note(dic[(lst[i][1])], 1)
+        player3.play_note(dic[(lst[i][2])], 1)
+        player4.play_note(dic[(lst[i][3])], 1)
+        for j in range(4):
+            print(dic[(lst[i][j])], end=' ')
+        print()
+
+    player1.play_note(dic[(lst[0][0])], 1)
+    player2.play_note(dic[(lst[0][1])], 1)
+    player3.play_note(dic[(lst[0][2])], 1)
+    player4.play_note(dic[(lst[0][3])], 1)    
+
+
+def playAgain():
+    print()
+    playagain = input("Play it again? (yes/no): ")
+    if playagain == 'yes':
+        return True
+    elif playagain == 'no':
+        return False
+    else:
+        print()
+        print("Wrong answer...")
+        playAgain()
+
+def saveIt():
+    print()
+    saveit = input("Want to save the progression? (yes/no): ")
+    if saveit == "yes":
+        f.write("\n")
+        for j in range(chordn):
+            for i in range(4):
+                f.write("%s " %dic[(lst[j][i])])
+            f.write("\n")
+    elif saveit == "no":
+        return
+    else:
+        print()
+        print("Wrong answer...")
+        saveIt()
+
 def oneMore():
     print()
-    tryagain = input("Try Again? ('yes' to try again. 'no' to stop.): ")
+    tryagain = input("Try again? (yes/no): ")
     if tryagain == 'yes':
         print()
         main()
@@ -126,9 +186,12 @@ def oneMore():
 
 def main():
 
-    genFirstChord(key)
+    genFirstChord()
 
     for chordnum in range(1, chordn):
+
+        global errorcount
+        errorcount = 0
 
         isSame = True #4성부에서 같은 음 없음
         isUnstable = True #감5도, 증4도 음정 배제
@@ -138,7 +201,7 @@ def main():
         isMove = True
 
         while isSame == True or isUnstable == True or isGap == False or isParalle == True or isEunbok == True or isMove == True:
-                    
+
             isSame = False
             isUnstable = False
             isGap = True
@@ -158,30 +221,25 @@ def main():
             isEunbok = eunbok(chordnum)
             isMove = getMove(chordnum)
 
-    printChord()
+            errorcount += 1
+            if errorcount >= 1000:
+                print("Trying again...")
+                return
 
-    player1 = musicalbeeps.Player(volume = 0.05, mute_output = False)
-    player2 = musicalbeeps.Player(volume = 0.05, mute_output = False)
-    player3 = musicalbeeps.Player(volume = 0.05, mute_output = False)
-    player4 = musicalbeeps.Player(volume = 0.05, mute_output = False)
-
-    for i in range(chordn):
-        print()
-        player1.play_note(dic[(lst[i][0])], 1)
-        player2.play_note(dic[(lst[i][1])], 1)
-        player3.play_note(dic[(lst[i][2])], 1)
-        player4.play_note(dic[(lst[i][3])], 1)
-
-    print()
-    player1.play_note(dic[(lst[0][0])], 1)
-    player2.play_note(dic[(lst[0][1])], 1)
-    player3.play_note(dic[(lst[0][2])], 1)
-    player4.play_note(dic[(lst[0][3])], 1)    
-
+    while True:
+        ppChords()
+        if not playAgain():
+            break
+    saveIt()
     oneMore()
 
 ########################
 
 key = key_setting(notes_lst)
 
-main()
+while True:
+    main()
+    if errorcount < 1000:
+        break
+
+f.close()

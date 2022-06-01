@@ -129,14 +129,12 @@ class Player:
         self._valid_note = True
         if note == 'pause':
             self.__wait_for_prev_sound()
-            self.__print_played_note(note, duration)
             time.sleep(duration)
             self._destructor_sleep = 0
         else:
             self.__calc_frequency(note)
             if self._valid_note:
                 self.__write_stream(duration)
-                self.__print_played_note(note, duration)
                 self._destructor_sleep = duration
 
     def __del__(self):
